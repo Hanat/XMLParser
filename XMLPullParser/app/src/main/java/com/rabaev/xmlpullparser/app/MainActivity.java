@@ -33,9 +33,6 @@ public class MainActivity extends ActionBarActivity {
 
         ecbList = (ListView) findViewById(R.id.ecbListView);
         messageText = (TextView)findViewById(R.id.messageText);
-
-        ecbList.setAdapter(getAdapter());
-
     }
 
 
@@ -63,33 +60,35 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public ArrayAdapter<String> getAdapter(){
-        ArrayList<String> list = new ArrayList<String>();
-
+    public void getAdapter(){
+        final ArrayList<String> list = new ArrayList<String>();
         try{
-            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
-            factory.setNamespaceAware(true);
-            XmlPullParser parser = factory.newPullParser();
-            parser.setInput(new InputStreamReader(getUrlData("http://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml")));
-            while (parser.getEventType() != XmlPullParser.END_DOCUMENT) {
-
-                if (parser.getEventType() == XmlPullParser.START_TAG
-                        && parser.getName().equals("Cube")) {
-                    list.add(parser.getAttributeValue(0) + " = "
-                            + parser.getAttributeValue(1) + "\n");
+            new AsyncTask<String, Integer, InputStreamReader>(){
+                protected Long doInBackground(String url) {
+                    return new InputStreamReader(getUrlData(url);
                 }
 
-                parser.next();
-            }
+                protected void onProgressUpdate(Integer progress) {
+                }
+
+                protected void onPostExecute(InputStreamReader result) {
+                    XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+                    factory.setNamespaceAware(true);
+                    XmlPullParser parser = factory.newPullParser();
+                    parser.setInput(result);
+                    while (parser.getEventType() != XmlPullParser.END_DOCUMENT) {
+                        if (parser.getEventType() == XmlPullParser.START_TAG&& parser.getName().equals("Cube")) {
+                            list.add(parser.getAttributeValue(0) + " = "+ parser.getAttributeValue(1) + "\n");
+                        }
+                        parser.next();
+                    }
+                    ecbList.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1, list););
+                }
+            }.execute("http://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml");
 
         }catch (Throwable exc){
-            ecbList = null;
             messageText.setText(exc.toString());
         }
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1, list);
-
-        return  adapter;
     }
 
     public InputStream getUrlData(String urlString)throws URISyntaxException, IOException {
